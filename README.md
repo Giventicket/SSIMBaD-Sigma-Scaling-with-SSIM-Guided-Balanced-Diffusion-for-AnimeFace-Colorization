@@ -194,3 +194,16 @@ python evaluate_FID.py \
 python evaluate_SSIM_PSNR.py
 ```
 ---
+
+## 12. Reference Settings: Visual Comparison
+
+The dataset includes two test scenarios to evaluate reconstruction fidelity and style generalization:
+
+<p align="center">
+  <img width="45%" src="https://github.com/user-attachments/assets/edf3943e-023f-431d-b688-ad62ddd73223" alt="Same Reference" />
+  <img width="45%" src="https://github.com/user-attachments/assets/2dd24eb6-2143-45fb-9555-68e60ce1754a" alt="Cross Reference" />
+</p>
+
+<p align="center">
+  <b>Left:</b> Same-Reference &nbsp;&nbsp;&nbsp;&nbsp; <b>Right:</b> Cross-Reference
+</p>
