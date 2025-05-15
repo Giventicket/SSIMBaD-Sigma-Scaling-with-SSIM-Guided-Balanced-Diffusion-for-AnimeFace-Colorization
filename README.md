@@ -11,8 +11,7 @@
 
 **SSIMBaD** introduces a novel diffusion-based framework for automatic colorization of anime-style facial sketches. Unlike prior DDPM/EDM-based methods that rely on handcrafted or fixed noise schedules, SSIMBaD leverages a perceptual noise schedule grounded in **SSIM-aligned sigma-space scaling**. This design enforces **uniform perceptual degradation** throughout the diffusion process, improving both **structural fidelity** and **stylistic accuracy** in the generated outputs.
 
-The following table compares baseline models and our proposed SSIMBaD framework under both **same-reference** and **cross-reference** settings.  
-Metrics include **PSNR** (higher is better), **MS-SSIM** (higher is better), and **FID** (lower is better).
+The following table compares baseline models and our proposed SSIMBaD framework under both **same-reference** and **cross-reference** settings. Metrics include **PSNR** (higher is better), **MS-SSIM** (higher is better), and **FID** (lower is better).
 
 | Method                                    | Training         | PSNR ↑ (Same / Cross) | MS-SSIM ↑ (Same / Cross) | FID ↓ (Same / Cross) |
 |-------------------------------------------|------------------|------------------------|---------------------------|-----------------------|
