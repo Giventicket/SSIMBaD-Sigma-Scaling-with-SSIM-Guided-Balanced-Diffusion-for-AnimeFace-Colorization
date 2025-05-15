@@ -1,0 +1,5 @@
+opencv_contrib_python==4.11.0.86
+opencv_python==4.11.0.86
+Pillow
+pytorch_lightning==2.1.2
+torchtorchvision
