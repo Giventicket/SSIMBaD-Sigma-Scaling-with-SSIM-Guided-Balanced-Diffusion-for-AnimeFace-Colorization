@@ -11,6 +11,18 @@
 
 **SSIMBaD** introduces a novel diffusion-based framework for automatic colorization of anime-style facial sketches. Unlike prior DDPM/EDM-based methods that rely on handcrafted or fixed noise schedules, SSIMBaD leverages a perceptual noise schedule grounded in **SSIM-aligned sigma-space scaling**. This design enforces **uniform perceptual degradation** throughout the diffusion process, improving both **structural fidelity** and **stylistic accuracy** in the generated outputs.
 
+The following table compares baseline models and our proposed SSIMBaD framework under both **same-reference** and **cross-reference** settings.  
+Metrics include **PSNR** (higher is better), **MS-SSIM** (higher is better), and **FID** (lower is better).
+
+| Method                                    | Training         | PSNR ↑ (Same / Cross) | MS-SSIM ↑ (Same / Cross) | FID ↓ (Same / Cross) |
+|-------------------------------------------|------------------|------------------------|---------------------------|-----------------------|
+| SCFT [Lee2020]                            | 300 epochs       | 17.17 / 15.47          | 0.7833 / 0.7627           | 43.98 / 45.18         |
+| AnimeDiffusion (pretrained) [Cao2024]     | 300 epochs       | 11.39 / 11.39          | 0.6748 / 0.6721           | 46.96 / 46.72         |
+| AnimeDiffusion (finetuned) [Cao2024]      | 300 + 10 epochs  | 13.32 / 12.52          | 0.7001 / 0.5683           | 135.12 / 139.13       |
+| SSIMBaD (w/o trajectory refinement)       | 300 epochs       | 15.15 / 13.04          | 0.7115 / 0.6736           | 53.33 / 55.18         |
+| **SSIMBaD (w/ trajectory refinement)** 🏆 | **300 + 10 epochs** | **18.92 / 15.84**      | **0.8512 / 0.8207**       | **34.98 / 37.10**
+
+
 This repository includes:
 
 * 🧠 Pretraining with classifier-free guidance and structural reconstruction loss
