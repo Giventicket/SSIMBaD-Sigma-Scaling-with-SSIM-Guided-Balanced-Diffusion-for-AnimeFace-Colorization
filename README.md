@@ -1,112 +1,156 @@
-# AnimeDiffusion - PyTorch Lightning Implementation
+# SSIMBaD: SSIM-Guided Balanced Diffusion for Anime Face Colorization
 
-This project is a PyTorch Lightning-based implementation of the original AnimeDiffusion repository ([xq-meng/AnimeDiffusion](https://github.com/xq-meng/AnimeDiffusion)). The code has been restructured and adapted to take advantage of PyTorch Lightning's modularity, scalability, and ease of experimentation. This README explains the purpose of each file and its role in the training and testing pipeline.
-
----
-
-## **Overview**
-AnimeDiffusion is a diffusion-based generative model designed to generate high-quality anime-style images. The implementation here includes key improvements and optimizations for distributed training, logging, and configuration management using PyTorch Lightning.
-
-### **Features**
-- Easy configuration via `argparse`
-- Distributed training support (`DDP` strategy)
-- TensorBoard integration for training visualization
-- Flexible checkpointing and model saving
-- Reproducible training runs with seed setting
+> Official implementation of
+> **"Sigma Scaling with SSIM-Guided Balanced Diffusion for AnimeFace Colorization"** (NeurIPS 2025 submission)
+> Includes pretraining, finetuning, perceptual noise schedule design, and full evaluation
 
 ---
 
-## **Key Files**
+## 🧠 Key Idea
 
-### **`AnimeDiffusion.py`**
-This file contains the core implementation of the `AnimeDiffusion` model. The model integrates:
-- UNet architecture with customizable channels and attention heads.
-- A diffusion process with configurable time steps and beta schedules.
-- Optional CBAM (Convolutional Block Attention Module) for enhanced feature extraction.
+The model uses **SSIM-guided sigma scaling**
 
-### **`main.py`**
-The entry point of the project, responsible for:
-1. **Argument Parsing**: Configures all training and testing parameters using `argparse`.
-2. **Trainer Setup**: Initializes PyTorch Lightning's `Trainer` with distributed training support and logging.
-3. **Callbacks**: Includes a `ModelCheckpoint` callback to save the top-3 models based on training loss.
-4. **Training and Testing**: Handles the execution of the training and testing loops.
+$$
+\phi^*(\sigma) = \frac{\sigma}{\sigma + 0.3}
+$$
+
+to ensure perceptual uniformity in both training and generation.
+It improves SSIM stability and sample quality compared to DDPM and vanilla EDM.
 
 ---
 
-## **How to Run**
+## 📦 Folder Overview
 
-### **Install Dependencies**
-Ensure you have the necessary Python packages installed. You can create a `requirements.txt` from the extracted dependencies and install them:
+```
+├── pretrain.py                 # SSIMBaD training (EDM + φ*(σ))
+├── finetune.py                 # Trajectory refinement stage
+├── AnimeDiffusion_pretrain.py # Baseline reproduction (vanilla EDM schedule)
+├── AnimeDiffusion_finetune.py # Baseline finetuning (MSE-based)
+├── evaluate_*.py              # FID / PSNR / SSIM evaluation
+├── optimal_phi.py             # φ*(σ) search via SSIM R² maximization
+├── models/                    # Diffusion & U-Net architectures
+├── utils/                     # XDoG, TPS warp, logger, path utils
+└── requirements.txt
+```
+
+---
+
+## 🚀 Installation
 
 ```bash
+git clone https://github.com/yourname/SSIMBaD.git
+cd SSIMBaD
+
+conda create -n ssimbad python=3.9
+conda activate ssimbad
 pip install -r requirements.txt
 ```
 
-### **Run Training**
-To train the model, run:
-```bash
-python main.py --do_train True --do_test False --epochs 50
-```
+---
 
-### **Run Testing**
-To test the model using a specific checkpoint, run:
-```bash
-python main.py --do_train False --do_test True --test_output_dir ./result/
-```
+## 🖼️ Dataset
 
-### **Custom Configurations**
-You can override the default configurations by passing arguments to the script. For example:
+* Dataset: **Danbooru Anime Face Dataset**
+* Each sample = (`Igt`, `Isketch`, `Iref`)
+* Sketch: Generated with XDoG filter
+* Reference: TPS + rotation warped version of ground truth
+
+**Prepare like:**
+
 ```bash
-python main.py --lr 5e-5 --train_batch_size 16 --gpus 0 1
+data/
+├── train/
+│   ├── 0001_gt.png
+│   ├── 0001_sketch.png
+│   └── 0001_ref.png
+├── val/
+...
 ```
 
 ---
 
-## **Arguments**
+## 🧪 Training SSIMBaD
 
-Below are the key arguments you can configure in `main.py`:
+```bash
+python pretrain.py \
+  --data_path ./data/train/ \
+  --save_path ./checkpoints/ssimbad/ \
+  --phi_type sigmoid_custom \
+  --use_phi_star True \
+  --num_epochs 300
+```
 
-### **General**
-- `--do_train`: Enable or disable training (default: `True`).
-- `--do_test`: Enable or disable testing (default: `True`).
-- `--epochs`: Number of training epochs (default: `50`).
-- `--gpus`: List of GPUs to use (default: `[0, 1]`).
-
-### **Diffusion Process**
-- `--time_step`: Number of diffusion time steps (default: `1000`).
-- `--linear_start`, `--linear_end`: Start and end values for the linear beta schedule.
-
-### **UNet Model**
-- `--channel_in`, `--channel_out`: Input and output channels (default: `7` and `3`).
-- `--channel_mult`: List of channel multipliers (default: `[1, 2, 4, 8]`).
-- `--attention_head`: Number of attention heads in the UNet.
-- `--cbam`: Whether to enable CBAM (default: `False`).
-
-### **Data Paths**
-- `--train_reference_path`: Path to reference training data.
-- `--train_condition_path`: Path to conditional training data.
-- `--test_reference_path`: Path to reference testing data.
-- `--test_condition_path`: Path to conditional testing data.
-
-### **Optimizer**
-- `--lr`: Initial learning rate (default: `1e-4`).
-- `--weight_decay`: Weight decay for optimizer (default: `0.01`).
-- `--warmup_epochs`: Number of warmup epochs (default: `1`).
+*This uses φ\*(σ) = σ / (σ + 0.3)* for both noise sampling and embedding.
+Check `optimal_phi.py` to search the best φ empirically.
 
 ---
 
-## **Logs and Checkpoints**
+## 🎯 Trajectory Refinement
 
-- **TensorBoard**: Logs are stored in the `logs/` directory. You can visualize training progress with:
-  ```bash
-  tensorboard --logdir logs
-  ```
-- **Checkpoints**: Saved in `logs/lightning_logs/version_0/checkpoints/`. The best 3 checkpoints are saved based on training loss.
+```bash
+python finetune.py \
+  --model_path ./checkpoints/ssimbad/epoch300.pth \
+  --save_path ./checkpoints/ssimbad_refined/ \
+  --num_epochs 10
+```
+
+This is NOT a generic MSE finetuning like AnimeDiffusion.
+It optimizes the **reverse trajectory** using perceptual noise scaling.
 
 ---
 
-## **Attribution**
+## 🧪 Baselines
 
-This project is based on [xq-meng/AnimeDiffusion](https://github.com/xq-meng/AnimeDiffusion). The original code was restructured and ported to PyTorch Lightning for easier experimentation and distributed training.
+* **AnimeDiffusion (vanilla EDM):**
 
-For more information, please refer to the original repository or raise issues here for discussion.
+```bash
+python AnimeDiffusion_pretrain.py
+```
+
+* **Finetune AnimeDiffusion:**
+
+```bash
+python AnimeDiffusion_finetune.py
+```
+
+---
+
+## 📊 Evaluation
+
+* **FID**:
+
+```bash
+python evaluate_FID.py \
+  --pred_dir ./results/ \
+  --gt_dir ./data/val/
+```
+
+* **PSNR + SSIM**:
+
+```bash
+python evaluate_SSIM_PSNR.py
+```
+
+---
+
+## 📈 Noise Schedule Analysis
+
+We visualize how SSIM degrades across diffusion timesteps for various noise schedules:
+
+### SSIM Degradation Curves
+
+| DDPM                            | EDM                            | SSIMBaD                        |
+| ------------------------------- | ------------------------------ | ------------------------------ |
+| ![](assets/ssim_curve_ddpm.png) | ![](assets/ssim_curve_edm.png) | ![](assets/ssim_curve_phi.png) |
+
+### Corresponding Noisy Image Grids
+
+| DDPM                                  | EDM                                  | SSIMBaD                              |
+| ------------------------------------- | ------------------------------------ | ------------------------------------ |
+| ![](assets/noisy_image_grid_ddpm.png) | ![](assets/noisy_image_grid_edm.png) | ![](assets/noisy_image_grid_phi.png) |
+
+---
+
+## 📜 License
+
+MIT License
