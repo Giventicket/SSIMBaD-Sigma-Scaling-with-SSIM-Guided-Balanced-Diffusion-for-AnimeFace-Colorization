@@ -140,7 +140,11 @@ python train.py \
 ---
 
 
-## 9. Evaluation
+## 9. Test
+
+Model evaluation can be performed via either `train.py` (for pretrained models) or `finetune.py` (for finetuned models). Currently, testing is integrated within the training scripts, but we plan to provide a **dedicated and cleaner testing interface** in a future update for ease of use and clarity. Stay tuned for a streamlined `test.py` entry point.
+
+## 10. Evaluation
 
 * **FID**:
 
