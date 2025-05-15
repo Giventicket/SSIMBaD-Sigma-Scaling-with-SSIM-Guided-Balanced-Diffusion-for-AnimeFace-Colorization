@@ -128,7 +128,7 @@ python train_pretrain.py \
     --inference_time_step 500 \
     --train_reference_path /data/Anime/train_data/reference/ \
     --train_condition_path /data/Anime/train_data/sketch/ \
-    --gpus 0
+    --gpus 0, 1
 ```
 
 ---
@@ -156,14 +156,29 @@ python train.py \
 
 Model evaluation can be performed via either `train.py` (for pretrained models) or `finetune.py` (for finetuned models). Currently, testing is integrated within the training scripts, but we plan to provide a **dedicated and cleaner testing interface** in a future update for ease of use and clarity. Stay tuned for a streamlined `test.py` entry point.
 
-## 10. Evaluation
+---
+
+## 10. Implementation Details
+
+We implement our training and evaluation pipeline using [PyTorch Lightning](https://www.pytorchlightning.ai/), enabling modular, scalable, and reproducible experimentation.
+
+- **Hardware:** All experiments were conducted on a single node equipped with **2× NVIDIA H100 (80GB)** GPUs.
+- **Distributed Training:** We use **DDP (Distributed Data Parallel)** via `strategy="ddp_find_unused_parameters_true"` for efficient multi-GPU training.
+- **Mixed Precision:** Enabled via `precision="16-mixed"` to accelerate training and reduce memory usage without sacrificing model quality.
+- **Training Epochs:** Pretraining was conducted for 300 epochs using MSE loss.
+- **Inference Timesteps:** Default forward process uses 500 steps unless specified otherwise.
+- **Checkpointing:** Top-3 checkpoints are saved based on training loss using:
+  ```python
+  ModelCheckpoint(monitor="train_avg_loss", save_top_k=3, mode="min")
+
+---
+
+## 11. Evaluation
 
 * **FID**:
 
 ```bash
 python evaluate_FID.py \
-  --pred_dir ./results/ \
-  --gt_dir ./data/val/
 ```
 
 * **PSNR + SSIM**:
@@ -171,5 +186,4 @@ python evaluate_FID.py \
 ```bash
 python evaluate_SSIM_PSNR.py
 ```
-
 ---
