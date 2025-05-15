@@ -97,22 +97,30 @@ pip install -r requirements.txt
 
 ## 6. Dataset
 
-* Dataset: **Danbooru Anime Face Dataset**
-* Each sample = (`Igt`, `Isketch`, `Iref`)
-* Sketch: Generated with XDoG filter
-* Reference: TPS + rotation warped version of ground truth
+We evaluate our method on a benchmark dataset introduced by [Cao et al. (2024)](https://arxiv.org/abs/...), specifically curated for reference-guided anime face colorization.
 
-**Prepare like:**
+- **Dataset:** Danbooru Anime Face Dataset  
+- **Train/Test Split:** 31,696 training pairs and 579 test samples  
+- **Resolution:** All images are resized to 256×256 pixels  
+- **Each sample includes:**
+  - `I_gt`: Ground-truth RGB image
+  - `I_sketch`: Corresponding edge-based sketch, generated using the XDoG filter [Winnemöller et al. 2012]
+  - `I_ref`: A reference image providing color and style cues
 
-```bash
-data/
-├── train/
-│   ├── 0001_gt.png
-│   ├── 0001_sketch.png
-│   └── 0001_ref.png
-├── val/
-...
-```
+The dataset is evaluated under two conditions:
+
+- **Same-Reference Setting:**  
+  The reference image is a spatially perturbed version of the ground-truth with the same underlying structure as `I_sketch`.
+
+- **Cross-Reference Setting:**  
+  The reference image is randomly sampled from other identities, introducing variation in color palette and facial attributes.
+
+This dual evaluation setup allows us to measure both:
+1. **Reconstruction fidelity** under ideal alignment, and  
+2. **Generalization performance** under cross-domain appearance shifts.
+
+> Note: During preprocessing, the reference image is warped from the ground truth using **TPS (Thin Plate Spline)** with **random rotation and deformation**, simulating natural variation.
+
 
 ---
 ## 7. Pretraining
