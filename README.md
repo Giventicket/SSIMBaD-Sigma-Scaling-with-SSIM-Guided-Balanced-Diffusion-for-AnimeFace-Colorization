@@ -104,29 +104,39 @@ data/
 ```
 
 ---
+## 7. Pretraining
 
-## 7. Training SSIMBaD
+The pretraining stage optimizes the base diffusion model using MSE loss between predicted and ground-truth RGB images, with sketch and reference inputs. It forms the foundation for perceptual finetuning.
 
 ```bash
-python pretrain.py \
-  --do_train 1
+python train_pretrain.py \
+    --do_train True \
+    --epochs 300 \
+    --train_batch_size 32 \
+    --inference_time_step 500 \
+    --train_reference_path /data/Anime/train_data/reference/ \
+    --train_condition_path /data/Anime/train_data/sketch/ \
+    --gpus 0
 ```
-
-*This uses φ\*(σ) = σ / (σ + 0.3)* for both noise sampling and embedding.
-Check `optimal_phi.py` to search the best φ empirically.
 
 ---
 
-## 8. Trajectory Refinement
+## 8. Finetuning (trajectory refinement)
+
+This project supports perceptual finetuning using pre-trained diffusion weights.  
+You can specify the strategy (e.g., `lpips-vgg`, `clip`, or `mse`) and resume from a checkpoint.
 
 ```bash
-python finetune.py \
-  --do_train 1
+python train.py \
+    --do_train True \
+    --resume_from_checkpoint /path/to/checkpoint.ckpt \
+    --strategy mse \
+    --epochs 10 \
+    --finetuning_inference_time_step 50 \
+    --train_reference_path /data/Anime/train_data/reference/ \
+    --train_condition_path /data/Anime/train_data/sketch/ \
+    --gpus 0 1
 ```
-
-This is NOT a generic MSE finetuning like AnimeDiffusion.
-It optimizes the **reverse trajectory** using perceptual noise scaling.
-
 ---
 
 
