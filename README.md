@@ -15,7 +15,7 @@ This repository includes:
 
 * 🧠 Pretraining with classifier-free guidance and structural reconstruction loss
 * 🎯 Finetuning with perceptual objectives and SSIM-guided trajectory refinement
-* 📈 Perceptual noise schedule design based on SSIM-\$\phi(\sigma)\$ curve fitting
+* 📈 Perceptual noise schedule design based on SSIM curve fitting
 * 🧪 Full evaluation pipeline for same-reference and cross-reference scenarios
 ---
 
