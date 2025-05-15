@@ -129,23 +129,8 @@ It optimizes the **reverse trajectory** using perceptual noise scaling.
 
 ---
 
-## 9. Baselines
 
-* **AnimeDiffusion (vanilla EDM):**
-
-```bash
-python AnimeDiffusion_pretrain.py
-```
-
-* **Finetune AnimeDiffusion:**
-
-```bash
-python AnimeDiffusion_finetune.py
-```
-
----
-
-## 10. Evaluation
+## 9. Evaluation
 
 * **FID**:
 
