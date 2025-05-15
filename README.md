@@ -1,25 +1,46 @@
-# SSIMBaD: SSIM-Guided Balanced Diffusion for Anime Face Colorization
+# SSIMBaD: Sigma Scaling with SSIM-Guided Balanced Diffusion for AnimeFace Colorization
 
-> Official implementation of
-> **"Sigma Scaling with SSIM-Guided Balanced Diffusion for AnimeFace Colorization"** (NeurIPS 2025 submission)
-> Includes pretraining, finetuning, perceptual noise schedule design, and full evaluation
+> Official PyTorch implementation of
+> **"Sigma Scaling with SSIM-Guided Balanced Diffusion for AnimeFace Colorization"**
+
+
+![ssimbad](https://github.com/user-attachments/assets/fc8d13d2-7fde-49dd-972c-1f24daa8c5c5)
+
+
+## 1. Overview
+
+**SSIMBaD** introduces a novel diffusion-based framework for automatic colorization of anime-style facial sketches. Unlike prior DDPM/EDM-based methods that rely on handcrafted or fixed noise schedules, SSIMBaD leverages a perceptual noise schedule grounded in **SSIM-aligned sigma-space scaling**. This design enforces **uniform perceptual degradation** throughout the diffusion process, improving both **structural fidelity** and **stylistic accuracy** in the generated outputs.
+
+This repository includes:
+
+* 🧠 Pretraining with classifier-free guidance and structural reconstruction loss
+* 🎯 Finetuning with perceptual objectives and SSIM-guided trajectory refinement
+* 📈 Perceptual noise schedule design based on SSIM-\$\phi(\sigma)\$ curve fitting
+* 🧪 Full evaluation pipeline for same-reference and cross-reference scenarios
+---
+
+## 2. Key Idea
+
+The quality of diffusion-based generation is highly sensitive to how noise levels are scheduled over time.
+
+Existing models like DDPM and EDM use different schedules for training and inference (e.g., log(σ) vs. σ<sup>1/ρ</sup>), often leading to **perceptual mismatches** that degrade visual consistency.
+
+To resolve this, we introduce a shared transformation ϕ: ℝ<sub>+</sub> → ℝ used **consistently** in both training and generation.  
+This transformation maps the raw noise scale σ to a perceptual difficulty axis, allowing uniform degradation in image quality over time.
+
+We select the optimal transformation ϕ\* by maximizing the linearity of SSIM degradation over a candidate set Φ:
+
+<div align="center">
+  <img width="667" alt="스크린샷 2025-05-15 오후 5 23 10" src="https://github.com/user-attachments/assets/40acbc96-3208-49a3-b549-7851aa6132c6" />
+</div>
+
+This function achieves the best perceptual alignment, leading to **smooth and balanced degradation curves**.
+
+> 🧞‍♂️ Think of ϕ\*(σ) as a perceptual "magic carpet ride" — smooth, stable, and optimally guided by structural similarity.
 
 ---
 
-## 🧠 Key Idea
-
-The model uses **SSIM-guided sigma scaling**
-
-$$
-\phi^*(\sigma) = \frac{\sigma}{\sigma + 0.3}
-$$
-
-to ensure perceptual uniformity in both training and generation.
-It improves SSIM stability and sample quality compared to DDPM and vanilla EDM.
-
----
-
-## 📦 Folder Overview
+## 3. Folder Overview
 
 ```
 ├── pretrain.py                 # SSIMBaD training (EDM + φ*(σ))
@@ -32,15 +53,30 @@ It improves SSIM stability and sample quality compared to DDPM and vanilla EDM.
 ├── utils/                     # XDoG, TPS warp, logger, path utils
 └── requirements.txt
 ```
+---
+
+## 4. Noise Schedule Analysis
+
+We visualize how SSIM degrades across diffusion timesteps for various noise schedules:
+
+### SSIM Degradation Curves
+
+| DDPM                            | EDM                            | SSIMBaD                        |
+| ------------------------------- | ------------------------------ | ------------------------------ |
+| ![](assets/ssim_curve_ddpm.png) | ![](assets/ssim_curve_edm.png) | ![](assets/ssim_curve_phi.png) |
+
+### Corresponding Noisy Image Grids
+
+| DDPM                                  | EDM                                  | SSIMBaD                              |
+| ------------------------------------- | ------------------------------------ | ------------------------------------ |
+| ![](assets/noisy_image_grid_ddpm.png) | ![](assets/noisy_image_grid_edm.png) | ![](assets/noisy_image_grid_phi.png) |
+
 
 ---
 
-## 🚀 Installation
+## 5. Installation
 
 ```bash
-git clone https://github.com/yourname/SSIMBaD.git
-cd SSIMBaD
-
 conda create -n ssimbad python=3.9
 conda activate ssimbad
 pip install -r requirements.txt
@@ -48,7 +84,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🖼️ Dataset
+## 6. Dataset
 
 * Dataset: **Danbooru Anime Face Dataset**
 * Each sample = (`Igt`, `Isketch`, `Iref`)
@@ -69,15 +105,11 @@ data/
 
 ---
 
-## 🧪 Training SSIMBaD
+## 7. Training SSIMBaD
 
 ```bash
 python pretrain.py \
-  --data_path ./data/train/ \
-  --save_path ./checkpoints/ssimbad/ \
-  --phi_type sigmoid_custom \
-  --use_phi_star True \
-  --num_epochs 300
+  --do_train 1
 ```
 
 *This uses φ\*(σ) = σ / (σ + 0.3)* for both noise sampling and embedding.
@@ -85,13 +117,11 @@ Check `optimal_phi.py` to search the best φ empirically.
 
 ---
 
-## 🎯 Trajectory Refinement
+## 8. Trajectory Refinement
 
 ```bash
 python finetune.py \
-  --model_path ./checkpoints/ssimbad/epoch300.pth \
-  --save_path ./checkpoints/ssimbad_refined/ \
-  --num_epochs 10
+  --do_train 1
 ```
 
 This is NOT a generic MSE finetuning like AnimeDiffusion.
@@ -99,7 +129,7 @@ It optimizes the **reverse trajectory** using perceptual noise scaling.
 
 ---
 
-## 🧪 Baselines
+## 9. Baselines
 
 * **AnimeDiffusion (vanilla EDM):**
 
@@ -115,7 +145,7 @@ python AnimeDiffusion_finetune.py
 
 ---
 
-## 📊 Evaluation
+## 10. Evaluation
 
 * **FID**:
 
@@ -132,25 +162,3 @@ python evaluate_SSIM_PSNR.py
 ```
 
 ---
-
-## 📈 Noise Schedule Analysis
-
-We visualize how SSIM degrades across diffusion timesteps for various noise schedules:
-
-### SSIM Degradation Curves
-
-| DDPM                            | EDM                            | SSIMBaD                        |
-| ------------------------------- | ------------------------------ | ------------------------------ |
-| ![](assets/ssim_curve_ddpm.png) | ![](assets/ssim_curve_edm.png) | ![](assets/ssim_curve_phi.png) |
-
-### Corresponding Noisy Image Grids
-
-| DDPM                                  | EDM                                  | SSIMBaD                              |
-| ------------------------------------- | ------------------------------------ | ------------------------------------ |
-| ![](assets/noisy_image_grid_ddpm.png) | ![](assets/noisy_image_grid_edm.png) | ![](assets/noisy_image_grid_phi.png) |
-
----
-
-## 📜 License
-
-MIT License
