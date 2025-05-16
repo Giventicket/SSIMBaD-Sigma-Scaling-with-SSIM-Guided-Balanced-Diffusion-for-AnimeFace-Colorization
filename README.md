@@ -1,25 +1,57 @@
-# SSIMBaD: SSIM-Guided Balanced Diffusion for Anime Face Colorization
+# SSIMBaD: Sigma Scaling with SSIM-Guided Balanced Diffusion for AnimeFace Colorization
 
-> Official implementation of
-> **"Sigma Scaling with SSIM-Guided Balanced Diffusion for AnimeFace Colorization"** (NeurIPS 2025 submission)
-> Includes pretraining, finetuning, perceptual noise schedule design, and full evaluation
+> Official PyTorch implementation of
+> **"Sigma Scaling with SSIM-Guided Balanced Diffusion for AnimeFace Colorization"**
+
+
+![ssimbad](https://github.com/user-attachments/assets/fc8d13d2-7fde-49dd-972c-1f24daa8c5c5)
+
+
+## 1. Overview
+
+**SSIMBaD** introduces a novel diffusion-based framework for automatic colorization of anime-style facial sketches. Unlike prior DDPM/EDM-based methods that rely on handcrafted or fixed noise schedules, SSIMBaD leverages a perceptual noise schedule grounded in **SSIM-aligned sigma-space scaling**. This design enforces **uniform perceptual degradation** throughout the diffusion process, improving both **structural fidelity** and **stylistic accuracy** in the generated outputs.
+
+The following table compares baseline models and our proposed SSIMBaD framework under both **same-reference** and **cross-reference** settings. Metrics include **PSNR** (higher is better), **MS-SSIM** (higher is better), and **FID** (lower is better).
+
+| Method                                    | Training         | PSNR ↑ (Same / Cross) | MS-SSIM ↑ (Same / Cross) | FID ↓ (Same / Cross) |
+|-------------------------------------------|------------------|------------------------|---------------------------|-----------------------|
+| SCFT [Lee2020]                            | 300 epochs       | 17.17 / 15.47          | 0.7833 / 0.7627           | 43.98 / 45.18         |
+| AnimeDiffusion (pretrained) [Cao2024]     | 300 epochs       | 11.39 / 11.39          | 0.6748 / 0.6721           | 46.96 / 46.72         |
+| AnimeDiffusion (finetuned) [Cao2024]      | 300 + 10 epochs  | 13.32 / 12.52          | 0.7001 / 0.5683           | 135.12 / 139.13       |
+| SSIMBaD (w/o trajectory refinement)       | 300 epochs       | 15.15 / 13.04          | 0.7115 / 0.6736           | 53.33 / 55.18         |
+| **SSIMBaD (w/ trajectory refinement)** 🏆 | **300 + 10 epochs** | **18.92 / 15.84**      | **0.8512 / 0.8207**       | **34.98 / 37.10**
+
+
+This repository includes:
+
+* 🧠 Pretraining with classifier-free guidance and structural reconstruction loss
+* 🎯 Finetuning with perceptual objectives and SSIM-guided trajectory refinement
+* 📈 Perceptual noise schedule design based on SSIM curve fitting
+* 🧪 Full evaluation pipeline for same-reference and cross-reference scenarios
+---
+
+## 2. Key Idea
+
+The quality of diffusion-based generation is highly sensitive to how noise levels are scheduled over time.
+
+Existing models like DDPM and EDM use different schedules for training and inference (e.g., log(σ) vs. σ<sup>1/ρ</sup>), often leading to **perceptual mismatches** that degrade visual consistency.
+
+To resolve this, we introduce a shared transformation ϕ: ℝ<sub>+</sub> → ℝ used **consistently** in both training and generation.  
+This transformation maps the raw noise scale σ to a perceptual difficulty axis, allowing uniform degradation in image quality over time.
+
+We select the optimal transformation ϕ\* by maximizing the linearity of SSIM degradation over a candidate set Φ:
+
+<div align="center">
+  <img width="667" alt="스크린샷 2025-05-15 오후 5 23 10" src="https://github.com/user-attachments/assets/40acbc96-3208-49a3-b549-7851aa6132c6" />
+</div>
+
+This function achieves the best perceptual alignment, leading to **smooth and balanced degradation curves**.
+
+> 🧞‍♂️ Think of ϕ\*(σ) as a perceptual "magic carpet ride" — smooth, stable, and optimally guided by structural similarity.
 
 ---
 
-## 🧠 Key Idea
-
-The model uses **SSIM-guided sigma scaling**
-
-$$
-\phi^*(\sigma) = \frac{\sigma}{\sigma + 0.3}
-$$
-
-to ensure perceptual uniformity in both training and generation.
-It improves SSIM stability and sample quality compared to DDPM and vanilla EDM.
-
----
-
-## 📦 Folder Overview
+## 3. Folder Overview
 
 ```
 ├── pretrain.py                 # SSIMBaD training (EDM + φ*(σ))
@@ -32,108 +64,9 @@ It improves SSIM stability and sample quality compared to DDPM and vanilla EDM.
 ├── utils/                     # XDoG, TPS warp, logger, path utils
 └── requirements.txt
 ```
-
 ---
 
-## 🚀 Installation
-
-```bash
-git clone https://github.com/yourname/SSIMBaD.git
-cd SSIMBaD
-
-conda create -n ssimbad python=3.9
-conda activate ssimbad
-pip install -r requirements.txt
-```
-
----
-
-## 🖼️ Dataset
-
-* Dataset: **Danbooru Anime Face Dataset**
-* Each sample = (`Igt`, `Isketch`, `Iref`)
-* Sketch: Generated with XDoG filter
-* Reference: TPS + rotation warped version of ground truth
-
-**Prepare like:**
-
-```bash
-data/
-├── train/
-│   ├── 0001_gt.png
-│   ├── 0001_sketch.png
-│   └── 0001_ref.png
-├── val/
-...
-```
-
----
-
-## 🧪 Training SSIMBaD
-
-```bash
-python pretrain.py \
-  --data_path ./data/train/ \
-  --save_path ./checkpoints/ssimbad/ \
-  --phi_type sigmoid_custom \
-  --use_phi_star True \
-  --num_epochs 300
-```
-
-*This uses φ\*(σ) = σ / (σ + 0.3)* for both noise sampling and embedding.
-Check `optimal_phi.py` to search the best φ empirically.
-
----
-
-## 🎯 Trajectory Refinement
-
-```bash
-python finetune.py \
-  --model_path ./checkpoints/ssimbad/epoch300.pth \
-  --save_path ./checkpoints/ssimbad_refined/ \
-  --num_epochs 10
-```
-
-This is NOT a generic MSE finetuning like SSIMBaD.
-It optimizes the **reverse trajectory** using perceptual noise scaling.
-
----
-
-## 🧪 Baselines
-
-* **SSIMBaD (vanilla EDM):**
-
-```bash
-python SSIMBaD_pretrain.py
-```
-
-* **Finetune SSIMBaD:**
-
-```bash
-python SSIMBaD_finetune.py
-```
-
----
-
-## 📊 Evaluation
-
-* **FID**:
-
-```bash
-python evaluate_FID.py \
-  --pred_dir ./results/ \
-  --gt_dir ./data/val/
-```
-
-* **PSNR + SSIM**:
-
-```bash
-python evaluate_SSIM_PSNR.py
-```
-
----
-
-## 📈 Noise Schedule Analysis
+## 4. Noise Schedule Analysis
 
 We visualize how SSIM degrades across diffusion timesteps for various noise schedules:
 
@@ -149,8 +82,127 @@ We visualize how SSIM degrades across diffusion timesteps for various noise sche
 | ------------------------------------- | ------------------------------------ | ------------------------------------ |
 | ![](assets/noisy_image_grid_ddpm.png) | ![](assets/noisy_image_grid_edm.png) | ![](assets/noisy_image_grid_phi.png) |
 
+
 ---
 
-## 📜 License
+## 5. Installation
 
-MIT License
+```bash
+conda create -n ssimbad python=3.9
+conda activate ssimbad
+pip install -r requirements.txt
+```
+
+---
+
+## 6. Dataset
+
+We evaluate our method on a benchmark dataset introduced by [Cao et al. (2024)](https://arxiv.org/abs/...), specifically curated for reference-guided anime face colorization.
+
+- **Dataset:** Danbooru Anime Face Dataset  
+- **Train/Test Split:** 31,696 training pairs and 579 test samples  
+- **Resolution:** All images are resized to 256×256 pixels  
+- **Each sample includes:**
+  - `I_gt`: Ground-truth RGB image
+  - `I_sketch`: Corresponding edge-based sketch, generated using the XDoG filter [Winnemöller et al. 2012]
+  - `I_ref`: A reference image providing color and style cues
+
+The dataset is evaluated under two conditions:
+
+- **Same-Reference Setting:**  
+  The reference image is a spatially perturbed version of the ground-truth with the same underlying structure as `I_sketch`.
+
+- **Cross-Reference Setting:**  
+  The reference image is randomly sampled from other identities, introducing variation in color palette and facial attributes.
+
+This dual evaluation setup allows us to measure both:
+1. **Reconstruction fidelity** under ideal alignment, and  
+2. **Generalization performance** under cross-domain appearance shifts.
+
+> Note: During preprocessing, the reference image is warped from the ground truth using **TPS (Thin Plate Spline)** with **random rotation and deformation**, simulating natural variation.
+
+
+---
+## 7. Pretraining
+
+The pretraining stage optimizes the base diffusion model using MSE loss between predicted and ground-truth RGB images, with sketch and reference inputs. It forms the foundation for perceptual finetuning.
+
+```bash
+python train.py \
+    --do_train True \
+    --epochs 300 \
+    --train_batch_size 32 \
+    --inference_time_step 500 \
+    --train_reference_path /data/Anime/train_data/reference/ \
+    --train_condition_path /data/Anime/train_data/sketch/ \
+    --gpus 0, 1
+```
+
+This is NOT a generic MSE finetuning like SSIMBaD.
+It optimizes the **reverse trajectory** using perceptual noise scaling.
+
+## 8. Finetuning (trajectory refinement)
+
+This project supports perceptual finetuning using pre-trained diffusion weights.  
+You can specify the strategy (e.g., `lpips-vgg`, `clip`, or `mse`) and resume from a checkpoint.
+
+```bash
+python finetune.py \
+    --do_train True \
+    --resume_from_checkpoint /path/to/checkpoint.ckpt \
+    --strategy mse \
+    --epochs 10 \
+    --finetuning_inference_time_step 50 \
+    --train_reference_path /data/Anime/train_data/reference/ \
+    --train_condition_path /data/Anime/train_data/sketch/ \
+    --gpus 0 1
+```
+---
+
+## 9. Test
+
+Model evaluation can be performed via either `train.py` (for pretrained models) or `finetune.py` (for finetuned models). Currently, testing is integrated within the training scripts, but we plan to provide a **dedicated and cleaner testing interface** in a future update for ease of use and clarity. Stay tuned for a streamlined `test.py` entry point.
+
+---
+
+## 10. Implementation Details
+
+We implement our training and evaluation pipeline using [PyTorch Lightning](https://www.pytorchlightning.ai/), enabling modular, scalable, and reproducible experimentation.
+
+- **Hardware:** All experiments were conducted on a single node equipped with **2× NVIDIA H100 (80GB)** GPUs.
+- **Distributed Training:** We use **DDP (Distributed Data Parallel)** via `strategy="ddp_find_unused_parameters_true"` for efficient multi-GPU training.
+- **Mixed Precision:** Enabled via `precision="16-mixed"` to accelerate training and reduce memory usage without sacrificing model quality.
+- **Training Epochs:** Pretraining was conducted for 300 epochs using MSE loss.
+- **Inference Timesteps:** Default forward process uses 500 steps unless specified otherwise.
+- **Checkpointing:** Top-3 checkpoints are saved based on training loss using:
+  ```python
+  ModelCheckpoint(monitor="train_avg_loss", save_top_k=3, mode="min")
+---
+
+## 11. Evaluation
+
+* **FID**:
+
+```bash
+python evaluate_FID.py \
+```
+
+* **PSNR + SSIM**:
+
+```bash
+python evaluate_SSIM_PSNR.py
+```
+---
+
+## 12. Reference Settings: Visual Comparison
+
+The dataset includes two test scenarios to evaluate reconstruction fidelity and style generalization:
+
+<p align="center">
+  <img width="45%" src="https://github.com/user-attachments/assets/edf3943e-023f-431d-b688-ad62ddd73223" alt="Same Reference" />
+  <img width="45%" src="https://github.com/user-attachments/assets/2dd24eb6-2143-45fb-9555-68e60ce1754a" alt="Cross Reference" />
+</p>
+
+<p align="center">
+  <b>Left:</b> Same-Reference &nbsp;&nbsp;&nbsp;&nbsp; <b>Right:</b> Cross-Reference
+</p>
