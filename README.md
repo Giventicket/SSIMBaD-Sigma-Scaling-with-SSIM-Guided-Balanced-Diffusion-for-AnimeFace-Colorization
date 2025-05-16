@@ -128,7 +128,7 @@ This dual evaluation setup allows us to measure both:
 The pretraining stage optimizes the base diffusion model using MSE loss between predicted and ground-truth RGB images, with sketch and reference inputs. It forms the foundation for perceptual finetuning.
 
 ```bash
-python train.py \
+python pretrain.py \
     --do_train True \
     --epochs 300 \
     --train_batch_size 32 \
