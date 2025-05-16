@@ -3,7 +3,7 @@ import argparse
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
-from AnimeDiffusion_finetune import AnimeDiffusion
+from SSIMBaD_finetune import SSIMBaD
 from distutils.util import strtobool
 import torch
 
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         strategy="ddp_find_unused_parameters_true",
     )
 
-    model = AnimeDiffusion(cfg)
+    model = SSIMBaD(cfg)
 
     # Training
     if cfg.do_train:
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     # Testing
     if cfg.do_test:
         os.makedirs(cfg.test_output_dir, exist_ok=True)  # 디렉토리 생성
-        checkpoint = torch.load("/root/phi_space_uniform_AnimeDiffusion/logs/lightning_logs/version_13/checkpoints/epoch=07-train_avg_loss=0.0086.ckpt", map_location='cuda')
+        checkpoint = torch.load("/root/phi_space_uniform_SSIMBaD/logs/lightning_logs/version_13/checkpoints/epoch=07-train_avg_loss=0.0086.ckpt", map_location='cuda')
         
         checkpoint['state_dict'].pop('model.inference_time_steps', None)
         

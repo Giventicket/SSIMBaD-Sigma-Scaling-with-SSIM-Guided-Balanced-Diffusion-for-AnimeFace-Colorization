@@ -24,8 +24,8 @@ It improves SSIM stability and sample quality compared to DDPM and vanilla EDM.
 ```
 ├── pretrain.py                 # SSIMBaD training (EDM + φ*(σ))
 ├── finetune.py                 # Trajectory refinement stage
-├── AnimeDiffusion_pretrain.py # Baseline reproduction (vanilla EDM schedule)
-├── AnimeDiffusion_finetune.py # Baseline finetuning (MSE-based)
+├── SSIMBaD_pretrain.py # Baseline reproduction (vanilla EDM schedule)
+├── SSIMBaD_finetune.py # Baseline finetuning (MSE-based)
 ├── evaluate_*.py              # FID / PSNR / SSIM evaluation
 ├── optimal_phi.py             # φ*(σ) search via SSIM R² maximization
 ├── models/                    # Diffusion & U-Net architectures
@@ -94,23 +94,23 @@ python finetune.py \
   --num_epochs 10
 ```
 
-This is NOT a generic MSE finetuning like AnimeDiffusion.
+This is NOT a generic MSE finetuning like SSIMBaD.
 It optimizes the **reverse trajectory** using perceptual noise scaling.
 
 ---
 
 ## 🧪 Baselines
 
-* **AnimeDiffusion (vanilla EDM):**
+* **SSIMBaD (vanilla EDM):**
 
 ```bash
-python AnimeDiffusion_pretrain.py
+python SSIMBaD_pretrain.py
 ```
 
-* **Finetune AnimeDiffusion:**
+* **Finetune SSIMBaD:**
 
 ```bash
-python AnimeDiffusion_finetune.py
+python SSIMBaD_finetune.py
 ```
 
 ---
