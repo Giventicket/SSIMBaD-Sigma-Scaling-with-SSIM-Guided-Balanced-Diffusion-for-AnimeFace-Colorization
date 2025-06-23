@@ -97,7 +97,7 @@ pip install -r requirements.txt
 
 ## 6. Dataset
 
-We evaluate our method on a benchmark dataset introduced by [Cao et al. (2024)]([https://arxiv.org/abs/...](https://github.com/xq-meng/AnimeDiffusion)), specifically curated for reference-guided anime face colorization.
+We evaluate our method on a benchmark dataset introduced by [Cao et al. (2024)](https://github.com/xq-meng/AnimeDiffusion), specifically curated for reference-guided anime face colorization.
 
 - **Dataset:** Danbooru Anime Face Dataset  
 - **Train/Test Split:** 31,696 training pairs and 579 test samples  
