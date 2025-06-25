@@ -159,9 +159,48 @@ python finetune.py \
 ```
 ---
 
-## 9. Test
+## 9. Inference
 
-Model evaluation can be performed via either `pretrain.py` (for pretrained models) or `finetune.py` (for finetuned models). Currently, testing is integrated within the training scripts, but we plan to provide a **dedicated and cleaner testing interface** in a future update for ease of use and clarity. Stay tuned for a streamlined `test.py` entry point.
+Model evaluation is supported through the existing training scripts: `pretrain.py` for evaluating pretrained models, and `finetune.py` for evaluating finetuned ones. While testing is currently embedded within these scripts, we plan to release a dedicated and streamlined `test.py` interface in the future for improved usability and clarity.
+
+### 🔧 Inference Command Examples
+
+#### ▶ Using `pretrain.py` (for pretrained checkpoints)
+
+```bash
+python3 pretrain.py \
+  --do_train False \
+  --do_test True \
+  --checkpoint_path ./checkpoints/best.ckpt \
+  --test_output_dir ./result_inference \
+  --test_reference_path /data/Anime/test_data/reference/ \
+  --test_condition_path /data/Anime/test_data/sketch/ \
+  --test_gt_path /data/Anime/test_data/reference/ \
+  --gpus 0 \
+  --do_guiding True
+```
+
+#### ▶ Using `finetune.py` (for fine-tuned checkpoints)
+
+```bash
+python3 finetune.py \
+  --do_train False \
+  --do_test True \
+  --checkpoint_path ./checkpoints/best.ckpt \
+  --test_output_dir ./result_inference \
+  --test_reference_path /data/Anime/test_data/reference/ \
+  --test_condition_path /data/Anime/test_data/sketch/ \
+  --test_gt_path /data/Anime/test_data/reference/ \
+  --gpus 0 \
+  --do_guiding True
+```
+
+### 🧠 Notes
+
+* Set `--do_train False` and `--do_test True` to run inference only.
+* Use `--checkpoint_path` to specify the model to evaluate.
+* `--do_guiding` toggles LPIPS-guided inference (`True`) vs. plain DDIM-style inference (`False`).
+* Results will be saved in the directory specified by `--test_output_dir`.
 
 ---
 
@@ -181,16 +220,38 @@ We implement our training and evaluation pipeline using [PyTorch Lightning](http
 
 ## 11. Evaluation
 
-* **FID**:
+Quantitative evaluation of the model can be performed using the following scripts. All metrics support configurable directory paths and device settings via command-line arguments.
+
+---
+
+### ▶ FID
+
+To compute FID between the reference and generated images:
 
 ```bash
-python evaluate_FID.py \
+python3 evaluate_FID.py \
+  --real_dir /data/Anime/test_data/reference \
+  --generated_dir ./result_inference \
+  --device cuda \
+  --batch_size 50
 ```
 
-* **PSNR + SSIM**:
+### ▶ PSNR
 
 ```bash
-python evaluate_SSIM_PSNR.py
+python3 evaluate_PSNR.py \
+  --real_dir /data/Anime/test_data/reference \
+  --generated_dir ./result_inference \
+  --device cuda
+```
+
+### ▶ MS-SSIM
+
+```bash
+python3 evaluate_SSIM.py \
+  --real_dir /data/Anime/test_data/reference \
+  --generated_dir ./result_inference \
+  --device cuda
 ```
 ---
 
