@@ -177,7 +177,6 @@ python3 pretrain.py \
   --test_condition_path /data/Anime/test_data/sketch/ \
   --test_gt_path /data/Anime/test_data/reference/ \
   --gpus 0 \
-  --do_guiding True
 ```
 
 #### ▶ Using `finetune.py` (for fine-tuned checkpoints)
