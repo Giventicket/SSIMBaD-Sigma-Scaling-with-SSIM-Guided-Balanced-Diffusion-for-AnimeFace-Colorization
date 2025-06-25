@@ -164,7 +164,7 @@ class GaussianDiffusion(nn.Module):
         ret = []
         x_next = x_t * self.inference_time_steps[0]
         
-        # LPIPS 모델 생성 (미리 생성해서 self.lpips로 캐싱해도 좋음)
+        # LPIPS settings
         # if self.lpips_loss_fn is None:
         #     self.lpips_loss_fn = lpips.LPIPS(net='vgg').to(x_t.device)
         #     self.lpips_loss_fn.eval()

@@ -23,6 +23,8 @@ def parse_arguments():
     
     # Diffusion Process Configuration
     parser.add_argument('--inference_time_step', type=int, default=500, help='Number of diffusion inference time steps')
+    parser.add_argument('--do_guiding', type=lambda x: bool(strtobool(x)), default=True, 
+                    help='Enable or disable training (True/False)')
     
     # UNet Configuration
     parser.add_argument('--channel_in', type=int, default=7, 
@@ -83,6 +85,8 @@ def parse_arguments():
     parser.add_argument('--S_noise', type=float, default=1, help='Scale factor for additional noise applied in stochastic sampling')
     parser.add_argument('--c', type=float, default=0.3, help='hyperparameter for the bound squash sampling')
 
+    parser.add_argument('--checkpoint_path', type=str, default='./model.cpkt', help='Path to checkpoint')
+    
     # Parse arguments
     args = parser.parse_args()
     
@@ -130,9 +134,7 @@ if __name__ == "__main__":
     # Testing
     if cfg.do_test:
         os.makedirs(cfg.test_output_dir, exist_ok=True)  # 디렉토리 생성
-        checkpoint = torch.load("/root/phi_space_uniform_SSIMBaD/logs/lightning_logs/version_11/checkpoints/epoch=293-train_avg_loss=0.0038.ckpt", map_location='cuda')
-        # checkpoint = torch.load("/root/phi_space_uniform_SSIMBaD/logs/lightning_logs/version_13/checkpoints/epoch=07-train_avg_loss=0.0086.ckpt", map_location='cuda')
-        
+        checkpoint = torch.load(cfg.checkpoint_path, map_location='cuda')
         checkpoint['state_dict'].pop('model.inference_time_steps', None)
         
         model.load_state_dict(checkpoint['state_dict'], strict=False)
