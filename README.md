@@ -97,7 +97,7 @@ pip install -r requirements.txt
 
 ## 6. Dataset
 
-We evaluate our method on a benchmark dataset introduced by [Cao et al. (2024)](https://arxiv.org/abs/...), specifically curated for reference-guided anime face colorization.
+We evaluate our method on a benchmark dataset introduced by [Cao et al. (2024)](https://github.com/xq-meng/AnimeDiffusion), specifically curated for reference-guided anime face colorization.
 
 - **Dataset:** Danbooru Anime Face Dataset  
 - **Train/Test Split:** 31,696 training pairs and 579 test samples  
@@ -161,7 +161,7 @@ python finetune.py \
 
 ## 9. Test
 
-Model evaluation can be performed via either `train.py` (for pretrained models) or `finetune.py` (for finetuned models). Currently, testing is integrated within the training scripts, but we plan to provide a **dedicated and cleaner testing interface** in a future update for ease of use and clarity. Stay tuned for a streamlined `test.py` entry point.
+Model evaluation can be performed via either `pretrain.py` (for pretrained models) or `finetune.py` (for finetuned models). Currently, testing is integrated within the training scripts, but we plan to provide a **dedicated and cleaner testing interface** in a future update for ease of use and clarity. Stay tuned for a streamlined `test.py` entry point.
 
 ---
 
