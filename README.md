@@ -183,6 +183,18 @@ python3 pretrain.py \
 
 ```bash
 python3 finetune.py \
+    --do_train False \
+    --do_test True \
+    --checkpoint_path /root/SSIMBaD/logs/lightning_logs/version_5/checkpoints/epoch=03-train_avg_loss=0.0667.ckpt \
+    --test_output_dir ./result_inference \
+    --test_reference_path /data/Anime/test_data/reference/ \
+    --test_condition_path /data/Anime/test_data/sketch/ \
+    --gpus 0 \
+    --do_guiding False
+```bash
+
+```bash
+python3 finetune.py \
   --do_train False \
   --do_test True \
   --checkpoint_path ./checkpoints/best.ckpt \
@@ -194,6 +206,7 @@ python3 finetune.py \
   --do_guiding True
 ```
 
+  
 ### 🧠 Notes
 
 * Set `--do_train False` and `--do_test True` to run inference only.
