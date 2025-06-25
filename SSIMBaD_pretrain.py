@@ -162,9 +162,9 @@ class SSIMBaD(pl.LightningModule):
             
     def test_step(self, batch, batch_idx):
         if self.cfg.do_guiding:
-            self.test_step_guided(self, batch, batch_idx)
+            self.test_step_guided(batch, batch_idx)
         else:
-            self.test_step_non_guided(self, batch, batch_idx)
+            self.test_step_non_guided(batch, batch_idx)
             
     def test_step_non_guided(self, batch, batch_idx):
         with torch.no_grad():
