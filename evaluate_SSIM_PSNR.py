@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 # 경로 설정
 real_dir = '/data/Anime/test_data/reference'
-generated_dir = './result_diff'
+generated_dir = './result_diff_guided_ssim'
 
 # 이미지 리스트 정렬
 real_files = sorted([f for f in os.listdir(real_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
@@ -36,8 +36,10 @@ for real_file, gen_file in tqdm(zip(real_files, generated_files), total=len(real
     img_gen = cv2.cvtColor(img_gen, cv2.COLOR_BGR2RGB)
 
     # Tensor 변환 후 배치 차원 추가
-    real_tensor = to_tensor(img_real).unsqueeze(0).cuda()
-    gen_tensor = to_tensor(img_gen).unsqueeze(0).cuda()
+    # real_tensor = to_tensor(img_real).unsqueeze(0).cuda()
+    # gen_tensor = to_tensor(img_gen).unsqueeze(0).cuda()
+    real_tensor = to_tensor(img_real).unsqueeze(0)
+    gen_tensor = to_tensor(img_gen).unsqueeze(0)
 
     # MS-SSIM 계산
     ms_ssim = piq.multi_scale_ssim(gen_tensor, real_tensor, data_range=1.0).item()

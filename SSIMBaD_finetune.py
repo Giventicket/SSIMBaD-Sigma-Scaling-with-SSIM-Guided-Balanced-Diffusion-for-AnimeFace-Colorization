@@ -154,7 +154,7 @@ class SSIMBaD(pl.LightningModule):
         if self.trainer.is_global_zero:
             self.print(f"Epoch {self.current_epoch} - Avg Loss: {avg_loss:.4f}")
     
-    
+    """
     def test_step(self, batch, batch_idx):
         with torch.no_grad():
             x_ref = batch["reference"].to(self.device)  # [B, 3, H, W]
@@ -172,17 +172,18 @@ class SSIMBaD(pl.LightningModule):
             images[i].save(output_path)
     
     """
+    
     @torch.inference_mode(False)
     @torch.enable_grad()
     def test_step(self, batch, batch_idx):
-        x_ref = batch["reference"].to(self.device).requires_grad_(False)  # 참조는 그래디언트 불필요
+        x_ref = batch["reference"].to(self.device).requires_grad_(False)
         x_con = batch["condition"].to(self.device)
         x_dis = batch["distorted"].to(self.device)
         x_gt = batch["gt"].to(self.device)
 
         x_cond = torch.cat([x_con, x_dis], dim=1).requires_grad_(True)
         noise = torch.randn_like(x_ref).requires_grad_(True)
-        with torch.enable_grad():  # 가이던스 단계에서만 그래디언트 활성화
+        with torch.enable_grad():
             rets = self.model.inference_guided(
                 x_t=noise,
                 x_cond=x_cond,
@@ -196,4 +197,4 @@ class SSIMBaD(pl.LightningModule):
 
     def on_test_epoch_end(self):
         self.print(f"All test outputs saved to {self.cfg.test_output_dir}")
-    """
+    
