@@ -23,9 +23,7 @@ def parse_arguments():
     
     # Diffusion Process Configuration
     parser.add_argument('--inference_time_step', type=int, default=500, help='Number of diffusion inference time steps')
-    parser.add_argument('--do_guiding', type=lambda x: bool(strtobool(x)), default=True, 
-                    help='Enable or disable training (True/False)')
-    
+
     # UNet Configuration
     parser.add_argument('--channel_in', type=int, default=7, 
                         help='Input channels for UNet')

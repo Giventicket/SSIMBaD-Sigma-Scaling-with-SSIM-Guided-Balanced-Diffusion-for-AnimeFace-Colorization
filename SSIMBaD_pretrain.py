@@ -161,12 +161,6 @@ class SSIMBaD(pl.LightningModule):
             self.print(f"Epoch {self.current_epoch} - Avg Loss: {avg_loss:.4f}")
             
     def test_step(self, batch, batch_idx):
-        if self.cfg.do_guiding:
-            self.test_step_guided(batch, batch_idx)
-        else:
-            self.test_step_non_guided(batch, batch_idx)
-            
-    def test_step_non_guided(self, batch, batch_idx):
         with torch.no_grad():
             x_ref = batch["reference"].to(self.device)  # [B, 3, H, W]
             x_con = batch["condition"].to(self.device)  # [B, 1, H, W]
@@ -182,27 +176,5 @@ class SSIMBaD(pl.LightningModule):
             output_path = os.path.join(self.cfg.test_output_dir, f'ret_{filename}')
             images[i].save(output_path)
     
-    @torch.inference_mode(False)
-    @torch.enable_grad()
-    def test_step_guided(self, batch, batch_idx):
-        x_ref = batch["reference"].to(self.device).requires_grad_(False)
-        x_con = batch["condition"].to(self.device)
-        x_dis = batch["distorted"].to(self.device)
-        x_gt = batch["gt"].to(self.device)
-
-        x_cond = torch.cat([x_con, x_dis], dim=1).requires_grad_(True)
-        noise = torch.randn_like(x_ref).requires_grad_(True)
-        with torch.enable_grad():
-            rets = self.model.inference_guided(
-                x_t=noise,
-                x_cond=x_cond,
-                x_ref=x_gt
-            )[-1]
-
-        images = utils.image.tensor2PIL(rets)
-        for i, filename in enumerate(batch['name']):
-            output_path = os.path.join(self.cfg.test_output_dir, f'ret_{filename}')
-            images[i].save(output_path)
-
     def on_test_epoch_end(self):
         self.print(f"All test outputs saved to {self.cfg.test_output_dir}")

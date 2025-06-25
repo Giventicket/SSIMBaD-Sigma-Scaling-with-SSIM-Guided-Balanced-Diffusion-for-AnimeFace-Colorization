@@ -5,7 +5,7 @@ from torch.optim.lr_scheduler import LambdaLR
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from data.anime_train import Anime
-# from data.anime_inference import Anime as Anime_inference
+from data.anime_inference import Anime as Anime_inference_guided
 from data.anime_train import Anime as Anime_inference
 from models.diffusion import GaussianDiffusion
 import utils.image
@@ -96,12 +96,20 @@ class SSIMBaD(pl.LightningModule):
         return train_dataloader
 
     def test_dataloader(self):
-        self.test_dataset = Anime_inference(
-            reference_path = self.cfg.test_reference_path, 
-            condition_path = self.cfg.test_condition_path,
-            # gt_path = self.cfg.test_gt_path,
-            size = self.cfg.size,
-        )
+        if self.cfg.do_guiding:
+            self.test_dataset = Anime_inference_guided(
+                reference_path = self.cfg.test_reference_path, 
+                condition_path = self.cfg.test_condition_path,
+                gt_path = self.cfg.test_gt_path,
+                size = self.cfg.size,
+            )
+        else:
+            self.test_dataset = Anime_inference(
+                reference_path = self.cfg.test_reference_path, 
+                condition_path = self.cfg.test_condition_path,
+                size = self.cfg.size,
+            )
+            
         test_dataset = DataLoader(
             self.test_dataset, 
             batch_size = self.cfg.test_batch_size, 
