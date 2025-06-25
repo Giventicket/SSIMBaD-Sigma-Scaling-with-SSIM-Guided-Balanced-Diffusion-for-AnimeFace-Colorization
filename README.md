@@ -191,9 +191,9 @@ python3 finetune.py \
     --test_condition_path /data/Anime/test_data/sketch/ \
     --gpus 0 \
     --do_guiding False
-```bash
+```
 
-```bash
+```
 python3 finetune.py \
   --do_train False \
   --do_test True \
